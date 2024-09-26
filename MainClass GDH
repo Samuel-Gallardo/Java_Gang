@@ -1,0 +1,138 @@
+package gestionreservahotel;
+
+import java.util.Scanner;
+
+public class MainClass {
+    public static void main(String[] args) {
+        Scanner input = new Scanner(System.in);
+        int opc = 0;
+
+        Hotel hotel1 = new Hotel("H-001", "Hotel Del Vicho");
+        Hotel hotel2 = new Hotel("H-002", "Hotel Del Samuel");
+
+        hotel1.agregarHabitacion(new Habitacion(101, 10.0));
+        hotel1.agregarHabitacion(new Habitacion(102, 20.0));
+        hotel1.agregarHabitacion(new Habitacion(103, 30.0));
+        hotel1.agregarHabitacion(new Habitacion(104, 40.0));
+        hotel1.agregarHabitacion(new Habitacion(105, 50.0));
+        
+        hotel2.agregarHabitacion(new Habitacion(201, 30.0));
+        hotel2.agregarHabitacion(new Habitacion(202, 40.0));
+        hotel2.agregarHabitacion(new Habitacion(203, 50.0));
+        hotel2.agregarHabitacion(new Habitacion(204, 60.0));
+        hotel2.agregarHabitacion(new Habitacion(205, 70.0));
+
+        Cliente cliente = null;
+        
+        while (opc!=5){
+            System.out.println("""
+                           =============MENU=============
+                           1.- Ver Hoteles                |  
+                           2.- Hacer reserva              |  
+                           3.- Liberar reserva            | 
+                           4.- Ver Detalles de la Reserva | 
+                           5.- Salir                      |
+                           ==============================""");
+            opc=input.nextInt();
+            switch (opc){
+                case 1:
+                    System.out.println("   HOTELES");
+                    System.out.println(hotel1.getNombre());
+                    System.out.println(hotel2.getNombre());
+                    break; 
+                case 2:
+                    System.out.println("=====Reserva=====");
+                    System.out.println("Seleccione hotel");
+                    System.out.println("1.- " + hotel1.getNombre());
+                    System.out.println("2.- " + hotel2.getNombre());
+                    int opcHotel = input.nextInt();
+                    Hotel hotelSeleccionado =(opcHotel == 1) ? hotel1 : (opcHotel == 2) ? hotel2 : null;
+                    if (hotelSeleccionado==null){
+                        System.out.println("Opcion No valida");
+                        break;
+                    }
+                    
+                    boolean seguirReservando=true;
+                    while (seguirReservando){
+                        System.out.println("Habitaciones Disponibles: ");
+                        for (int i = 0; i < hotelSeleccionado.getHabitaciones().size(); i++){
+                            Habitacion habitacionX=hotelSeleccionado.getHabitaciones().get(i);
+                            System.out.printf("%d.- Habitacion %d | Precio: %.2f | Disponible: %s%n", 
+                                                  i + 1, habitacionX.getNumeroHabitacion(), 
+                                                  habitacionX.getPrecioNoche(), 
+                                                  habitacionX.isDisponible() ? "Sí" : "No");
+                        }
+                        System.out.println("Seleccione la habitacion que desea reservar(Presione 0 para terminar de Reservar)");
+                        int opcReserva=input.nextInt();
+                        if(opcReserva==0){
+                            seguirReservando =  false;
+                        }else if (opcReserva>0 && opcReserva<=hotelSeleccionado.getHabitaciones().size()){
+                            Habitacion habitacionReservada=hotelSeleccionado.getHabitaciones().get(opcReserva-1);
+                            if (!habitacionReservada.isDisponible()){
+                                System.out.println("La habitacion no esta disponible");
+                            }else{
+                                if (cliente==null){
+                                    System.out.println("Ingrese su rut");
+                                    String idCliente=input.next();
+                                    System.out.println("Ingrese solo su Nombre");
+                                    String nombreCliente=input.next();
+                                    cliente = new Cliente (idCliente, nombreCliente);
+                                }
+                                
+                                Reserva nuevaReserva = new Reserva(hotelSeleccionado, habitacionReservada);
+                                cliente.getReservas().add(nuevaReserva);
+                                System.out.println("Reserva Realizada con exito a "+cliente.getNombre()+" en la Habitacion "+habitacionReservada.getNumeroHabitacion());
+                            }
+                        }else{
+                            System.out.println("Opcion Invalida, intentelo de nuevo");
+                        }
+                    }
+                    break;
+                case 3: {
+                        if (cliente != null && !cliente.getReservas().isEmpty()) {
+                            System.out.println("Seleccione la reserva que desea liberar:");
+                            for (int i = 0; i < cliente.getReservas().size(); i++) {
+                                Reserva reserva = cliente.getReservas().get(i);
+                                System.out.printf("%d.- Hotel: %s | Habitacion: %d%n",
+                                                  i + 1,
+                                                  reserva.getHotel().getNombre(),
+                                                  reserva.getHabitacionReservada().getNumeroHabitacion());
+                            }
+
+                            int reservaParaLiberar = input.nextInt();
+                            if (reservaParaLiberar > 0 && reservaParaLiberar <= cliente.getReservas().size()) {
+                                Reserva reservaSeleccionada = cliente.getReservas().get(reservaParaLiberar - 1);
+                                reservaSeleccionada.getHabitacionReservada().liberar(); 
+                                cliente.getReservas().remove(reservaParaLiberar - 1); 
+                                System.out.println("Reserva liberada con éxito.");
+                            } else {
+                                System.out.println("Opción inválida. Intente de nuevo.");
+                            }
+                        } else {
+                            System.out.println("No hay reservas disponibles.");
+                        }
+                    }
+                    break;
+                case 4:
+                    if (cliente!=null && !cliente.getReservas().isEmpty()){
+                        System.out.println("""
+                                           ===Detalles de la reserva===
+                                           Nombre : """+cliente.getNombre()
+                        +"\nRut    : "+cliente.getIdCliente()
+                        +"\n___RESERVAS___");
+                        for(int i = 0;i < cliente.getReservas().size();i++){
+                            Reserva reserva = cliente.getReservas().get(i);
+                                System.out.printf("%d.- Hotel: %s | Habitacion: %d | Precio: %.2f%n",
+                                                i+1,
+                                                reserva.getHotel().getNombre(),
+                                                reserva.getHabitacionReservada().getNumeroHabitacion(),
+                                                reserva.getHabitacionReservada().getPrecioNoche());
+                        }
+                    }else{
+                        System.out.println("No tienes Reservas registradas");
+                    }
+                    break;
+            }
+        }
+    }
+}
